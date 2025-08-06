@@ -1,0 +1,15 @@
+{
+    "name": "meeting-scheduler-scripts",
+    "version": "1.0.0",
+    "description": "Setup scripts for Meeting Scheduler",
+    "scripts": {
+      "setup-email": "node setup-email.js",
+      "setup-database": "node setup-database.js"
+    },
+    "dependencies": {
+      "nodemailer": "^6.9.8",
+      "mongodb": "^6.3.0",
+      "bcryptjs": "^2.4.3"
+    }
+  }
+  

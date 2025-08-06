@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-
-// Mock database - in production, use MongoDB
-const users: Array<{
-  id: string
-  name: string
-  email: string
-  password: string
-  createdAt: Date
-}> = []
+import { getCollection } from '@/lib/mongodb'
+import { User, sanitizeUser } from '@/lib/models/User'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,11 +16,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { message: 'Invalid email format' },
+        { status: 400 }
+      )
+    }
+
+    // Validate password strength
+    if (password.length < 6) {
+      return NextResponse.json(
+        { message: 'Password must be at least 6 characters long' },
+        { status: 400 }
+      )
+    }
+
+    const users = await getCollection('users')
+
     // Check if user already exists
-    const existingUser = users.find(user => user.email === email)
+    const existingUser = await users.findOne({ email: email.toLowerCase() })
     if (existingUser) {
       return NextResponse.json(
-        { message: 'User already exists' },
+        { message: 'User already exists with this email' },
         { status: 400 }
       )
     }
@@ -36,31 +48,46 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 12)
 
     // Create user
-    const user = {
-      id: Date.now().toString(),
-      name,
-      email,
+    const newUser: User = {
+      name: name.trim(),
+      email: email.toLowerCase(),
       password: hashedPassword,
-      createdAt: new Date()
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isActive: true,
+      preferences: {
+        emailNotifications: true,
+        reminderTime: 15, // 15 minutes before meeting
+        defaultMeetingDuration: 60 // 1 hour
+      }
     }
 
-    users.push(user)
+    const result = await users.insertOne(newUser)
+    const createdUser = await users.findOne({ _id: result.insertedId })
+
+    if (!createdUser) {
+      return NextResponse.json(
+        { message: 'Failed to create user' },
+        { status: 500 }
+      )
+    }
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { 
+        userId: createdUser._id.toString(), 
+        email: createdUser.email 
+      },
       process.env.JWT_SECRET || 'fallback-secret',
       { expiresIn: '24h' }
     )
 
+    const sanitizedUser = sanitizeUser(createdUser)
+
     return NextResponse.json({
       message: 'User created successfully',
       token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email
-      }
+      user: sanitizedUser
     })
   } catch (error) {
     console.error('Signup error:', error)

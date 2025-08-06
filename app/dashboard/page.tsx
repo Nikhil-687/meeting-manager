@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Calendar, Clock, Users, Plus, MapPin, Video, LogOut, Bell, TrendingUp } from 'lucide-react'
+import { Calendar, Clock, Users, Plus, MapPin, Video, LogOut, Bell, TrendingUp, Mail } from 'lucide-react'
 import Link from 'next/link'
 
 interface Meeting {
@@ -128,6 +128,10 @@ export default function DashboardPage() {
             <h1 className="header-title">Meeting Scheduler</h1>
           </div>
           <div className="header-nav">
+            <Link href="/settings/email" className="btn btn-ghost btn-sm">
+              <Mail style={{ width: '1rem', height: '1rem' }} />
+              Email Settings
+            </Link>
             <button className="btn btn-ghost btn-sm">
               <Bell style={{ width: '1rem', height: '1rem' }} />
             </button>

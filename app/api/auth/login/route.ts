@@ -1,23 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-
-// Mock database - in production, use MongoDB
-const users: Array<{
-  id: string
-  name: string
-  email: string
-  password: string
-  createdAt: Date
-}> = [
-  {
-    id: '1',
-    name: 'Demo User',
-    email: 'demo@example.com',
-    password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/VcSAg/9qm', // 'password'
-    createdAt: new Date()
-  }
-]
+import { getCollection } from '@/lib/mongodb'
+import { sanitizeUser } from '@/lib/models/User'
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,8 +16,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const users = await getCollection('users')
+
     // Find user
-    const user = users.find(u => u.email === email)
+    const user = await users.findOne({ 
+      email: email.toLowerCase(),
+      isActive: true 
+    })
+    
     if (!user) {
       return NextResponse.json(
         { message: 'Invalid credentials' },
@@ -49,21 +40,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Update last login
+    await users.updateOne(
+      { _id: user._id },
+      { 
+        $set: { 
+          updatedAt: new Date(),
+          lastLoginAt: new Date()
+        }
+      }
+    )
+
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { 
+        userId: user._id.toString(), 
+        email: user.email 
+      },
       process.env.JWT_SECRET || 'fallback-secret',
       { expiresIn: '24h' }
     )
 
+    const sanitizedUser = sanitizeUser(user)
+
     return NextResponse.json({
       message: 'Login successful',
       token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email
-      }
+      user: sanitizedUser
     })
   } catch (error) {
     console.error('Login error:', error)
