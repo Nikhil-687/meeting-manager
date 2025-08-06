@@ -33,7 +33,10 @@ interface Stats {
 }
 
 export default function DashboardPage() {
-  const [meetings, setMeetings] = useState<Meeting[]>([])
+  const [meetings, setMeetings] = useState<Meeting[]>([
+    {_id: '1', title: 'Meet Manager Launch', agenda: 'launching a full stack website with managing and tracking your meets and alarms you when its live', date: '2025-08-06', startTime: '20:00', endTime: '20:30', location: 'https://meet.google.com/isb-svcd-ysm', participants: [{email: "patidarnikhil687@gmail.com", name: "Nikhil", status: "invited"}, {email: "patidarnikhil477@gmail.com", name: "Nikhil", status: "invited"}], organizer: { name: 'Nikhil Patidar', email: "patidarnikhil687@gmail.com" }, isOrganizer: false },
+    {_id: '2', title: 'Demo MeetMeneger', agenda: 'together testing the website, a bug while adding new meetings is observed', date: '2025-08-06', startTime: '19:00', endTime: '19:30', location: 'https://meet.google.com/isb-svcd-ysm', participants: [{email: "patidarnikhil687@gmail.com", name: "Nikhil", status: "declined"}, {email: "patidarnikhil477@gmail.com", name: "Nikhil", status: "invited"}, {email: "patidarnikhil47@gmail.com", name: "Nikhil", status: "accepted"}, {email: "patidarnikhil77@gmail.com", name: "Nikhil", status: "invited"}], organizer: { name: 'Nikhil Patidar', email: "patidarnikhil687@gmail.com" }, isOrganizer: false }
+  ])
   const [stats, setStats] = useState<Stats>({
     totalMeetings: 0,
     upcomingMeetings: 0,
